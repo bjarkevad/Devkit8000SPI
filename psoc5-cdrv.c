@@ -123,15 +123,20 @@ ssize_t psoc5_cdrv_read(struct file *filep, char __user *ubuf,
 
 	len = snprintf(resultBuf, sizeof resultBuf, "%d", result);
 
+	resultBuf[len] = '\0';
+
 	printk("cdrv read: '%s' \n", resultBuf);
 
 	if(copy_to_user(ubuf, resultBuf, len) != 0) {
 		printk("Error copying to user \n");
 		return -EFAULT;
 	}
+
 	count = len;
 	*f_pos += len;
+
 	printk("Count: %i\nf_pos: %i\n", count, *f_pos);
+
 	return len; 
 }
 
