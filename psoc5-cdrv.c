@@ -27,7 +27,7 @@ static int __init psoc5_cdrv_init(void) {
 
 	printk("PSoC5 driver initializing \n");
 	cdev_init(&psoc5Dev, &psoc5_Fops);
-
+	
 	psoc5Dev.owner 	= THIS_MODULE;
 	psoc5Dev.ops		= &psoc5_Fops;
 	devno						= MKDEV(PSOC5_MAJOR, PSOC5_MINOR);
@@ -63,9 +63,8 @@ static void __exit psoc5_cdrv_exit(void) {
 
 int psoc5_cdrv_open(struct inode *inodep, struct file *filep) {
 	int err;
-	
+
 	printk("Opening PSoC5 device..\n");
-	
 	
 	if((err = request_irq(gpio_to_irq(INTGPIO), psoc5_isr, IRQF_TRIGGER_RISING, "psoc5IRQ", NULL) < 0)) {
 		printk("Error requesting irq resources.. \n");
@@ -75,9 +74,9 @@ int psoc5_cdrv_open(struct inode *inodep, struct file *filep) {
 	if(!try_module_get(psoc5_Fops.owner))
 		return -ENODEV;
 
-
 	return err;
 }
+
 
 int psoc5_cdrv_release(struct inode *inode, struct file *filep) {
 
@@ -91,53 +90,42 @@ int psoc5_cdrv_release(struct inode *inode, struct file *filep) {
 
 ssize_t psoc5_cdrv_write(struct file *filep, const char __user *ubuf,
 										size_t count, loff_t *f_pos) {
-	int len, value;
+	unsigned int len;
+	char value;
 	char kbuf[MAXLEN];
 
 	len = count < MAXLEN ? count : MAXLEN;
+
 	if(copy_from_user(kbuf, ubuf, len))
 		return -EFAULT;
+  kbuf[len] = '\0';
 
-	kbuf[len] = '\0';
-
-	printk("String from user: %s \n", kbuf);
 	sscanf(kbuf, "%i", &value);
-	printk("value %i \n", value);
+	printk("value %X, len %i \n", value, len);
 
 	psoc5_spi_write(value);
-
 	return count;
 }
 
 ssize_t psoc5_cdrv_read(struct file *filep, char __user *ubuf,
 										size_t count, loff_t *f_pos) {
+	char result;
 	char resultBuf[5];
-	u8 result;
-	int len;
 
-//	printk("Waiting for interrupt..\n");	
 	wait_event_interruptible(wait_queue, newData == 1);
 	newData = 0; 
 
 	result = psoc5_spi_read();
 
-	len = snprintf(resultBuf, sizeof resultBuf, "%d", result);
-
-	resultBuf[len] = '\0';
+	count = snprintf(resultBuf, sizeof(resultBuf), "%c", result);
 
 	printk("cdrv read: '%s' \n", resultBuf);
 
-	if(copy_to_user(ubuf, resultBuf, len) != 0) {
+	if(copy_to_user(ubuf, resultBuf, sizeof(resultBuf)) != 0) {
 		printk("Error copying to user \n");
 		return -EFAULT;
 	}
-
-	count = len;
-	*f_pos += len;
-
-	printk("Count: %i\nf_pos: %i\n", count, *f_pos);
-
-	return len; 
+ 	return count;
 }
 
 struct file_operations psoc5_Fops = {

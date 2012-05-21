@@ -2,7 +2,6 @@
 
 #define MAXLEN 512
 
-
 static struct spi_device *psoc5_spi_device;
 
 static struct omap2_mcspi_device_config psoc5_mcspi_device_config = {
@@ -68,10 +67,10 @@ int psoc5_spi_exit(void) {
 	return 0;
 }
 
-u8 psoc5_spi_read(void) {
+char psoc5_spi_read(void) {
 	struct spi_transfer t[1];
 	struct spi_message m;
-	u8 data = 0;
+	char data;
 
 	memset(t, 0, sizeof(t));
 	spi_message_init(&m);
@@ -84,26 +83,25 @@ u8 psoc5_spi_read(void) {
 
 	spi_sync(m.spi, &m);
 
-	//printk("PSoC5-spi: read: %2x \n", data); 
+	printk("PSoC5-spi: read: '%X'\n", data); 
 
 	return data;
 }
 
-
-void psoc5_spi_write(u8 dataToWrite) {
+void psoc5_spi_write(char dataToWrite) {
 	struct spi_transfer t[1];
 	struct spi_message m;
-	u8 data = 0;
+	//char* data;
 
-	data = dataToWrite;
+	//data = dataToWrite;
 
 	memset(&t, 0, sizeof(t));
 	spi_message_init(&m);
 	m.spi = psoc5_spi_device;
 
-	printk("PSoC5-spi: write: %02x \n", data);
+	printk("PSoC5-spi: write: '%X' \n", dataToWrite);
 
-	t[0].tx_buf = &data;
+	t[0].tx_buf = &dataToWrite;
 	t[0].rx_buf = NULL;
 	t[0].len = 1;
 	spi_message_add_tail(&t[0], &m);
