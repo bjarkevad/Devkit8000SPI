@@ -19,6 +19,6 @@ int psoc5_spi_init(void);
 int psoc5_spi_exit(void);
 
 char psoc5_spi_read(void);
-void psoc5_spi_write(char dataToWrite);
+void psoc5_spi_write(char* dataToWrite, unsigned int len);
 
 #endif

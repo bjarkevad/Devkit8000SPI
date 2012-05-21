@@ -90,20 +90,18 @@ int psoc5_cdrv_release(struct inode *inode, struct file *filep) {
 
 ssize_t psoc5_cdrv_write(struct file *filep, const char __user *ubuf,
 										size_t count, loff_t *f_pos) {
-	unsigned int len;
-	char value;
+	unsigned int len, i;
 	char kbuf[MAXLEN];
 
 	len = count < MAXLEN ? count : MAXLEN;
 
 	if(copy_from_user(kbuf, ubuf, len))
 		return -EFAULT;
-  kbuf[len] = '\0';
 
-	sscanf(kbuf, "%i", &value);
-	printk("value %X, len %i \n", value, len);
+	printk("Received '%X, %X' from user. Len = %i\n", kbuf[0], kbuf[1],len);
 
-	psoc5_spi_write(value);
+		psoc5_spi_write(kbuf, len);
+
 	return count;
 }
 
@@ -119,7 +117,7 @@ ssize_t psoc5_cdrv_read(struct file *filep, char __user *ubuf,
 
 	count = snprintf(resultBuf, sizeof(resultBuf), "%c", result);
 
-	printk("cdrv read: '%s' \n", resultBuf);
+	printk("cdrv read: '%X' \n", result);
 
 	if(copy_to_user(ubuf, resultBuf, sizeof(resultBuf)) != 0) {
 		printk("Error copying to user \n");

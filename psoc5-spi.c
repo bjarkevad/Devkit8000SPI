@@ -88,23 +88,27 @@ char psoc5_spi_read(void) {
 	return data;
 }
 
-void psoc5_spi_write(char dataToWrite) {
-	struct spi_transfer t[1];
+void psoc5_spi_write(char *dataToWrite, unsigned int len) {
+	int i;
+	char *data;
+	struct spi_transfer t[len];
 	struct spi_message m;
-	//char* data;
 
-	//data = dataToWrite;
+	data = dataToWrite;
 
 	memset(&t, 0, sizeof(t));
 	spi_message_init(&m);
 	m.spi = psoc5_spi_device;
 
-	printk("PSoC5-spi: write: '%X' \n", dataToWrite);
-
-	t[0].tx_buf = &dataToWrite;
-	t[0].rx_buf = NULL;
-	t[0].len = 1;
-	spi_message_add_tail(&t[0], &m);
+	for( i = 0 ; i < len ; i++ )
+	{
+		t[i].tx_buf = &data[i];
+		t[i].rx_buf = NULL;
+		t[i].len = 1;
+		spi_message_add_tail(&t[i], &m);
+		printk("PSoC5-spi: write: '%X' \n", data[i]);
+	}
 
 	spi_sync(m.spi, &m);
 }
+
