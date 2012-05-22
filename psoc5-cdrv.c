@@ -90,7 +90,7 @@ int psoc5_cdrv_release(struct inode *inode, struct file *filep) {
 
 ssize_t psoc5_cdrv_write(struct file *filep, const char __user *ubuf,
 										size_t count, loff_t *f_pos) {
-	unsigned int len, i;
+	unsigned int len;
 	char kbuf[MAXLEN];
 
 	len = count < MAXLEN ? count : MAXLEN;
@@ -110,7 +110,12 @@ ssize_t psoc5_cdrv_read(struct file *filep, char __user *ubuf,
 	char result;
 	char resultBuf[5];
 
-	wait_event_interruptible(wait_queue, newData == 1);
+	if(wait_event_interruptible_timeout(wait_queue, newData == 1, 1000) == 0) {
+		result = 0;
+		copy_to_user(ubuf, &result, 1);
+		return 1;
+	}
+
 	newData = 0; 
 
 	result = psoc5_spi_read();
