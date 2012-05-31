@@ -1,25 +1,14 @@
 #include "psoc5-spi.h"
-
-#define MAXLEN 512
-
-static struct spi_device *psoc5_spi_device;
-
-static struct omap2_mcspi_device_config psoc5_mcspi_device_config = {
-	.turbo_mode 		= 0,
-	.single_channel = 1, //Master
-};
-
 struct spi_board_info omap3devkit8000_spi_board_info[] = {
 	{
 		.modalias			= "psoc5",
 		.bus_num			= 1,
 		.chip_select 	= 0, 
-		.max_speed_hz = 15000000, //Should be ok, can be set lower if transfer errors occur
+		.max_speed_hz =  2000000, //1500000, //Should be ok, can be set lower if transfer errors occur
 		.controller_data = &psoc5_mcspi_device_config,
 		.mode					= SPI_MODE_3,
 	},
 };
-
 
 static int __devinit psoc5_probe(struct spi_device* spi) {
 
@@ -43,6 +32,7 @@ static struct spi_driver psoc5_spi_driver = {
 	},
 	.probe = psoc5_probe,
 	.remove = __devexit_p(psoc5_remove),
+
 };
 
 int psoc5_spi_init(void) {
@@ -70,45 +60,48 @@ int psoc5_spi_exit(void) {
 char psoc5_spi_read(void) {
 	struct spi_transfer t[1];
 	struct spi_message m;
-	char data;
+	unsigned char data;
+
+	char data2;
+	data2 = 65;
 
 	memset(t, 0, sizeof(t));
 	spi_message_init(&m);
 	m.spi = psoc5_spi_device;
 
-	t[0].tx_buf = NULL;
+	t[0].tx_buf = NULL; //&data2;
 	t[0].rx_buf = &data;
 	t[0].len = 1;
 	spi_message_add_tail(&t[0], &m);
 
 	spi_sync(m.spi, &m);
 
-	printk("PSoC5-spi: read: '%X'\n", data); 
+	//printk("PSoC5-spi: read: '%X'\n", data); 
 
 	return data;
 }
 
 void psoc5_spi_write(char *dataToWrite, unsigned int len) {
-	int i;
-	char *data;
-	struct spi_transfer t[len];
+	struct spi_transfer t[1];
 	struct spi_message m;
 
-	data = dataToWrite;
-
-	memset(&t, 0, sizeof(t));
+	memset(t, 0, sizeof(t));
 	spi_message_init(&m);
 	m.spi = psoc5_spi_device;
 
+	t[0].tx_buf = dataToWrite;
+	t[0].rx_buf = NULL;
+	t[0].len = 1;
+	spi_message_add_tail(&t[0], &m);
+
+	/* enable this to print out what is sent in HEX
+	 * int i;
 	for( i = 0 ; i < len ; i++ )
 	{
-		t[i].tx_buf = &data[i];
-		t[i].rx_buf = NULL;
-		t[i].len = 1;
-		spi_message_add_tail(&t[i], &m);
-		printk("PSoC5-spi: write: '%X' \n", data[i]);
-	}
+		printk("PSoC5-spi: write: '%c' \nLen: %i \n", dataToWrite[i], len);
+	}*/
 
-	spi_sync(m.spi, &m);
+	if(spi_sync(m.spi, &m)!= 0)
+		printk(KERN_ALERT "SPI syncronization error!");
 }
 

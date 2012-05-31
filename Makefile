@@ -35,7 +35,7 @@ else
     # called from kernel build system: just declare what our modules are
 #    obj-m := ads7870.o #ads7870-core.o ads7870-spi.o
     obj-m += psoc5mod.o
-    psoc5mod-objs := psoc5-cdrv.o psoc5-spi.o
+    psoc5mod-objs := psoc5-spi.o psoc5-cdrv.o
 
 endif
 

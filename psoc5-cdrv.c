@@ -2,21 +2,11 @@
 #include <linux/sched.h>
 #include <linux/gpio.h>
 
-#include "psoc5-cdrv.h"
 #include "psoc5-spi.h"
-
-#define INTGPIO 7 
-
-static struct cdev psoc5Dev;
-struct file_operations psoc5_Fops;
-static int devno;
-
-DECLARE_WAIT_QUEUE_HEAD(wait_queue);
-int newData = 0;
-
+#include "psoc5-cdrv.h"
 
 irqreturn_t psoc5_isr(int irq, void *dev_id) {
-	//printk("PSoC5 interrupt!\n");
+	//printk(KERN_ALERT "PSoC5 interrupt!\n");
 	newData = 1;
 	wake_up_interruptible(&wait_queue);
 	return IRQ_HANDLED;
@@ -52,10 +42,8 @@ static int __init psoc5_cdrv_init(void) {
 }
 
 static void __exit psoc5_cdrv_exit(void) {
-	int err;
-	
 	printk("PSoC5 cdrv exit\n");
-	err = psoc5_spi_exit();
+  psoc5_spi_exit();
 	unregister_chrdev_region(devno, 1);
 	cdev_del(&psoc5Dev);
 	gpio_free(INTGPIO);
@@ -94,13 +82,13 @@ ssize_t psoc5_cdrv_write(struct file *filep, const char __user *ubuf,
 	char kbuf[MAXLEN];
 
 	len = count < MAXLEN ? count : MAXLEN;
-
+  len--;
 	if(copy_from_user(kbuf, ubuf, len))
 		return -EFAULT;
 
-	printk("Received '%X, %X' from user. Len = %i\n", kbuf[0], kbuf[1],len);
+	//kbuf[len] = '\0';
 
-		psoc5_spi_write(kbuf, len);
+	psoc5_spi_write(kbuf, len);
 
 	return count;
 }
@@ -110,9 +98,11 @@ ssize_t psoc5_cdrv_read(struct file *filep, char __user *ubuf,
 	char result;
 	char resultBuf[5];
 
+	//wait_event_interruptible(wait_queue, newData == 1);
 	if(wait_event_interruptible_timeout(wait_queue, newData == 1, 1000) == 0) {
 		result = 0;
 		copy_to_user(ubuf, &result, 1);
+		printk(KERN_ALERT "cdrv timeout read: '%X' \n", result);
 		return 1;
 	}
 
@@ -122,7 +112,8 @@ ssize_t psoc5_cdrv_read(struct file *filep, char __user *ubuf,
 
 	count = snprintf(resultBuf, sizeof(resultBuf), "%c", result);
 
-	printk("cdrv read: '%X' \n", result);
+	/*if(result != 0x00 && result != 0x0F)
+		printk(KERN_ALERT "cdrv read: '%X' \n", result);*/
 
 	if(copy_to_user(ubuf, resultBuf, sizeof(resultBuf)) != 0) {
 		printk("Error copying to user \n");
