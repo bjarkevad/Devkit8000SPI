@@ -94,12 +94,12 @@ void psoc5_spi_write(char *dataToWrite, unsigned int len) {
 	t[0].len = 1;
 	spi_message_add_tail(&t[0], &m);
 
-	/* enable this to print out what is sent in HEX
-	 * int i;
+	// enable this to print out what is sent in HEX
+	  int i;
 	for( i = 0 ; i < len ; i++ )
 	{
 		printk("PSoC5-spi: write: '%c' \nLen: %i \n", dataToWrite[i], len);
-	}*/
+	}
 
 	if(spi_sync(m.spi, &m)!= 0)
 		printk(KERN_ALERT "SPI syncronization error!");
