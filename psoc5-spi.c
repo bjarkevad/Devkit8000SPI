@@ -3,10 +3,10 @@ struct spi_board_info omap3devkit8000_spi_board_info[] = {
 	{
 		.modalias			= "psoc5",
 		.bus_num			= 1,
-		.chip_select 	= 0, 
-		.max_speed_hz =  2000000, //1500000, //Should be ok, can be set lower if transfer errors occur
-		.controller_data = &psoc5_mcspi_device_config,
-		.mode					= SPI_MODE_3,
+		.chip_select        = 0, 
+		.max_speed_hz       = 2000000,
+		.controller_data    = &psoc5_mcspi_device_config,
+		.mode				= SPI_MODE_3,
 	},
 };
 
@@ -26,11 +26,11 @@ static int __devexit psoc5_remove(struct spi_device* spi) {
 
 static struct spi_driver psoc5_spi_driver = {
 	.driver = {
-		.name = "psoc5",
-		.bus = &spi_bus_type,
+		.name  = "psoc5",
+		.bus   = &spi_bus_type,
 		.owner = THIS_MODULE,
 	},
-	.probe = psoc5_probe,
+	.probe  = psoc5_probe,
 	.remove = __devexit_p(psoc5_remove),
 
 };

@@ -18,9 +18,9 @@ static int __init psoc5_cdrv_init(void) {
 	printk("PSoC5 driver initializing \n");
 	cdev_init(&psoc5Dev, &psoc5_Fops);
 	
-	psoc5Dev.owner 	= THIS_MODULE;
-	psoc5Dev.ops		= &psoc5_Fops;
-	devno						= MKDEV(PSOC5_MAJOR, PSOC5_MINOR);
+	psoc5Dev.owner = THIS_MODULE;
+	psoc5Dev.ops = &psoc5_Fops;
+	devno = MKDEV(PSOC5_MAJOR, PSOC5_MINOR);
 	err = register_chrdev_region(devno, 1, "PSoC5");
 	err = cdev_add(&psoc5Dev, devno, 1);
 
@@ -43,7 +43,7 @@ static int __init psoc5_cdrv_init(void) {
 
 static void __exit psoc5_cdrv_exit(void) {
 	printk("PSoC5 cdrv exit\n");
-  psoc5_spi_exit();
+    psoc5_spi_exit();
 	unregister_chrdev_region(devno, 1);
 	cdev_del(&psoc5Dev);
 	gpio_free(INTGPIO);
